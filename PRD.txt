@@ -1,0 +1,89 @@
+Product Requirements Document (PRD)
+Secret Background Camera Recorder
+Project Name: HiddenCam (or Stealth Recorder)Version: 1.0
+Date: April 2026
+Target Platform: Android (Flutter ? Android APK/AAB)
+Development Approach: Flutter (Dart) with native Android integration via plugins or platform channels where needed.1. Overview / ObjectiveBuild a discreet Android application that allows users to capture photos and record videos completely in the background, even when the screen is turned off or the app is minimized. The app should feel like a "stealth" or "hidden" camera tool while complying with technical limitations of modern Android (14/15+).Core Value Proposition:
+Users can start recording or scheduling captures without any visible camera preview, with the phone screen off, and the app running silently in the background.Key Differentiators:  Works with screen off / locked  
+Minimal or customizable foreground notification  
+Disguised app icon & name (optional masquerade mode)  
+Reliable on major brands (Samsung, Xiaomi, etc.) with proper battery optimization guidance
+
+2. Target UsersUsers needing discreet recording (security, dashcam-style, monitoring, personal use)  
+Privacy-conscious users who want background operation
+
+3. Functional Requirements3.1 Core FeaturesPhoto Capture (Hidden)Take single or burst photos in background
+Trigger options: manual button, shake, timer, scheduled, or volume buttons (if possible)
+Front or rear camera selection
+Resolution settings (low/medium/high)
+
+Video Recording (Hidden)Start/stop video recording while screen is off or app in background
+Support for audio recording (with toggle)
+Video quality: 720p, 1080p (Full HD)
+Automatic segmented recording (to prevent file corruption on long sessions)
+Max duration or auto-stop options
+
+Background & Screen-Off BehaviorRecording must continue when screen is turned off
+App should survive being minimized or when user switches apps
+Use Foreground Service (type: camera) to keep the process alive
+
+User InterfaceMinimal main screen: Big "Start Secret Recording" / "Start Secret Photo Mode" buttons
+Settings page for:Camera selection (front/rear)
+Video quality & resolution
+Audio on/off
+Auto-start on boot (optional)
+Storage location & auto-delete old files
+Notification customization (minimal text)
+Battery optimization guide (Ignore Battery Optimizations, Unrestricted)
+Optional "Masquerade Mode": App icon and name can look like a calculator, notepad, or weather app
+
+Storage & File ManagementSave files to internal app directory or DCIM/HiddenCam folder
+Support for MP4 (video) and JPEG (photo)
+File naming with timestamp + camera used
+Gallery inside the app to view recorded media (protected with PIN/biometrics optional)
+
+3.2 Non-Functional RequirementsPerformance: Low battery drain as much as possible; use efficient CameraX/MediaRecorder under the hood
+Reliability: Recording should not stop unexpectedly on most devices (after user grants battery permissions)
+Privacy/Security: No data collection, no ads, no telemetry. Local storage only.
+Compatibility: Android 10+ (target Android 14/15+ with proper foreground service types)
+Discreetness: No visible camera indicator if possible (note: limited without root)
+
+4. Technical Considerations (Important for Flutter Implementation)Primary Plugin Recommendation: flutter_background_video_recorder (if still maintained) or similar background recording plugins.
+For more control: Use official camera package + custom native Android code via platform channels or FlutterMethodChannel to handle Foreground Service.
+Must declare in AndroidManifest.xml:android.permission.CAMERA
+android.permission.RECORD_AUDIO (if audio needed)
+android.permission.FOREGROUND_SERVICE_CAMERA
+android:foregroundServiceType="camera" on the service
+Use Partial Wake Lock + Foreground Service to keep recording alive with screen off.
+Battery Optimization: App must guide (and request) user to disable battery optimization and set to "Unrestricted".
+Limitations (Android 14/15+):Foreground notification is generally required and visible (can be made minimal).
+Camera indicator dot may appear in status bar.
+OEM-specific killing behavior (Xiaomi, Huawei, Samsung) — user must configure "Don't kill my app" settings.
+Root not required, but some advanced hiding (removing notification/indicator) needs root/Magisk.
+
+Flutter Architecture Suggestion:Use Riverpod / Provider for state management
+Background logic handled via native Android service
+Communication between Flutter UI and native service via MethodChannel / EventChannel
+File handling with path_provider
+
+5. User FlowsFirst Launch ? Permissions (Camera, Microphone, Notification, Ignore Battery) + Battery optimization guide
+Start Recording ? User taps "Start Hidden Video" ? App starts Foreground Service ? Screen can be turned off ? Recording continues
+Stop Recording ? User re-opens app or uses quick tile / notification action (if implemented)
+Take Hidden Photo ? Similar flow with ImageCapture
+
+6. Out of Scope (Phase 1)iOS support (much more restricted)
+Live streaming
+Remote control / web UI
+Advanced AI features (motion detection, face detection)
+Full root-level hiding
+Google Play distribution (due to policy risks — recommend sideloading)
+
+7. Success MetricsRecording continues reliably for at least 30+ minutes with screen off on major devices
+User can easily configure battery settings
+Minimal crashes or unexpected stops
+
+8. Risks & MitigationsAndroid Restrictions — Clearly inform users about required permissions and battery settings in onboarding.
+Play Store Rejection — Distribute as APK/AAB outside Google Play.
+OEM Killing — Provide per-brand instructions (link to dontkillmyapp.com style guide).
+Battery Drain — Add warnings and power-saving recording modes.
+
