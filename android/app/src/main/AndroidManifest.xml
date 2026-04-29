@@ -23,7 +23,8 @@
             android:name="id.flutter.flutter_background_service.BackgroundService"
             android:foregroundServiceType="camera|microphone"
             android:enabled="true"
-            android:exported="false" />
+            android:exported="false"
+            tools:replace="android:exported" />
 
         <activity
             android:name=".MainActivity"
