@@ -59,4 +59,5 @@ dependencies {
     
     implementation("androidx.lifecycle:lifecycle-service:2.6.2")
     implementation("com.google.guava:guava:31.1-android")
+    implementation("androidx.localbroadcastmanager:localbroadcastmanager:1.1.0")
 }
