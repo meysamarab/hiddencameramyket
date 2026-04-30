@@ -37,7 +37,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
       switch (call.method) {
         case 'onTrialEnded':
           print("Handling onTrialEnded");
-          _showTrialEndedDialog();
+          _showTrialEndedToast();
           break;
         case 'onPhotoTaken':
           print("Handling onPhotoTaken");
