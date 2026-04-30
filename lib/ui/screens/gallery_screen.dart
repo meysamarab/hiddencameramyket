@@ -1,16 +1,18 @@
 import 'dart:io';
 import 'package:flutter/material.dart';
-import 'package:path_provider/path_provider.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../l10n/app_localizations.dart';
+import '../../providers/app_providers.dart';
+import 'media_view_screen.dart';
 
-class GalleryScreen extends StatefulWidget {
+class GalleryScreen extends ConsumerStatefulWidget {
   const GalleryScreen({super.key});
 
   @override
-  State<GalleryScreen> createState() => _GalleryScreenState();
+  ConsumerState<GalleryScreen> createState() => _GalleryScreenState();
 }
 
-class _GalleryScreenState extends State<GalleryScreen> {
+class _GalleryScreenState extends ConsumerState<GalleryScreen> {
   List<File> _files = [];
   bool _isLoading = true;
 
@@ -21,28 +23,20 @@ class _GalleryScreenState extends State<GalleryScreen> {
   }
 
   Future<void> _loadFiles() async {
-    final directory = await getExternalStorageDirectory();
-    if (directory == null) return;
-    
-    final mediaDir = Directory('${directory.path}/Media');
-    if (!await mediaDir.exists()) {
+    try {
+      final cameraManager = ref.read(cameraManagerProvider);
+      final paths = await cameraManager.getMediaFiles();
+      
       setState(() {
-        _files = [];
+        _files = paths.map((p) => File(p)).toList();
         _isLoading = false;
       });
-      return;
+    } catch (e) {
+      print("Error loading gallery: $e");
+      setState(() {
+        _isLoading = false;
+      });
     }
-
-    final entities = await mediaDir.list().toList();
-    
-    setState(() {
-      _files = entities
-          .whereType<File>()
-          .where((f) => f.path.endsWith('.mp4') || f.path.endsWith('.jpg'))
-          .toList()
-        ..sort((a, b) => b.lastModifiedSync().compareTo(a.lastModifiedSync()));
-      _isLoading = false;
-    });
   }
 
   @override
@@ -71,25 +65,37 @@ class _GalleryScreenState extends State<GalleryScreen> {
 
                     return InkWell(
                       onTap: () {
-                        // Open file
+                        Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                            builder: (context) => MediaViewScreen(filePath: file.path),
+                          ),
+                        );
                       },
-                      child: Stack(
-                        fit: StackFit.expand,
-                        children: [
-                          if (!isVideo)
-                            Image.file(file, fit: BoxFit.cover)
-                          else
-                            Container(
-                              color: Colors.black87,
-                              child: const Icon(Icons.play_circle_outline, size: 48),
-                            ),
-                          if (isVideo)
-                            const Positioned(
-                              bottom: 4,
-                              right: 4,
-                              child: Icon(Icons.videocam, size: 16, color: Colors.white70),
-                            ),
-                        ],
+                      child: Container(
+                        decoration: BoxDecoration(
+                          borderRadius: BorderRadius.circular(8),
+                          color: Colors.black12,
+                        ),
+                        clipBehavior: Clip.antiAlias,
+                        child: Stack(
+                          fit: StackFit.expand,
+                          children: [
+                            if (!isVideo)
+                              Image.file(file, fit: BoxFit.cover)
+                            else
+                              Container(
+                                color: Colors.black87,
+                                child: const Icon(Icons.play_circle_outline, size: 48, color: Colors.white),
+                              ),
+                            if (isVideo)
+                              const Positioned(
+                                bottom: 4,
+                                right: 4,
+                                child: Icon(Icons.videocam, size: 16, color: Colors.white70),
+                              ),
+                          ],
+                        ),
                       ),
                     );
                   },

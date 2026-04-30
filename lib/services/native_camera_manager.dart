@@ -65,4 +65,14 @@ class NativeCameraManager {
       return false;
     }
   }
+
+  Future<List<String>> getMediaFiles() async {
+    try {
+      final List<dynamic>? result = await platform.invokeMethod<List<dynamic>>('getMediaFiles');
+      return result?.cast<String>() ?? [];
+    } on PlatformException catch (e) {
+      print("Failed to get media files: '${e.message}'.");
+      return [];
+    }
+  }
 }
