@@ -1,9 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../providers/app_providers.dart';
-import '../../l10n/app_localizations.dart';
 import 'settings_screen.dart';
 import 'gallery_screen.dart';
+import 'black_screen_mode.dart';
 import 'package:flutter_background_service/flutter_background_service.dart';
 
 class HomeScreen extends ConsumerWidget {
@@ -109,6 +109,19 @@ class HomeScreen extends ConsumerWidget {
                     }
                   },
                 ),
+              const SizedBox(height: 24),
+              _buildActionButton(
+                context: context,
+                label: l10n.masqueradeMode ?? 'حالت استتار',
+                icon: Icons.screen_lock_portrait_rounded,
+                color: Colors.grey.shade800,
+                onTap: () {
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(builder: (context) => const BlackScreenMode()),
+                  );
+                },
+              ),
             ],
           ),
         ),
