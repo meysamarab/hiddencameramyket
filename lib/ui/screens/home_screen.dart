@@ -4,7 +4,6 @@ import '../../providers/app_providers.dart';
 import '../../l10n/app_localizations.dart';
 import 'settings_screen.dart';
 import 'gallery_screen.dart';
-import 'black_screen_mode.dart';
 import 'package:flutter_background_service/flutter_background_service.dart';
 
 class HomeScreen extends ConsumerWidget {
@@ -72,9 +71,7 @@ class HomeScreen extends ConsumerWidget {
                     if (isRecording) {
                       await cameraManager.stopVideoRecording();
                       ref.read(isRecordingProvider.notifier).state = false;
-                      FlutterBackgroundService().invoke('stopService');
                     } else {
-                      FlutterBackgroundService().startService();
                       await cameraManager.startVideoRecording(direction: selectedCamera);
                       ref.read(isRecordingProvider.notifier).state = true;
                     }
@@ -91,9 +88,7 @@ class HomeScreen extends ConsumerWidget {
                     if (isBurstActive) {
                       await cameraManager.stopBurstPhoto();
                       ref.read(isBurstActiveProvider.notifier).state = false;
-                      FlutterBackgroundService().invoke('stopService');
                     } else {
-                      FlutterBackgroundService().startService();
                       await cameraManager.startBurstPhoto(
                         direction: selectedCamera,
                         durationMinutes: burstDuration,
@@ -110,19 +105,6 @@ class HomeScreen extends ConsumerWidget {
                     }
                   },
                 ),
-              const SizedBox(height: 24),
-              _buildActionButton(
-                context: context,
-                label: l10n.masqueradeMode ?? 'حالت استتار',
-                icon: Icons.screen_lock_portrait_rounded,
-                color: Colors.grey.shade800,
-                onTap: () {
-                  Navigator.push(
-                    context,
-                    MaterialPageRoute(builder: (context) => const BlackScreenMode()),
-                  );
-                },
-              ),
             ],
           ),
         ),

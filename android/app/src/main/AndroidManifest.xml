@@ -25,6 +25,12 @@
             android:enabled="true"
             android:exported="false"
             tools:replace="android:exported" />
+            
+        <service
+            android:name=".NativeBackgroundCameraService"
+            android:foregroundServiceType="camera|microphone"
+            android:enabled="true"
+            android:exported="false" />
 
         <activity
             android:name=".MainActivity"

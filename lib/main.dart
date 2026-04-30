@@ -11,8 +11,6 @@ import 'l10n/app_localizations.dart';
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
   
-  await BackgroundCameraService.initializeService();
-  
   final prefs = await SharedPreferences.getInstance();
   final showOnboarding = prefs.getBool('show_onboarding') ?? true;
 
