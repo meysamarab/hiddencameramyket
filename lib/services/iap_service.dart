@@ -7,9 +7,15 @@ class IAPService {
 
   Future<bool> init() async {
     try {
-      return await FlutterPoolakey.init(_rsaKey);
+      bool success = false;
+      await FlutterPoolakey.connect(
+        _rsaKey,
+        onSucceed: () => success = true,
+        onFailed: (message) => success = false,
+      );
+      return success;
     } catch (e) {
-      print("Poolakey init error: $e");
+      print("Poolakey connect error: $e");
       return false;
     }
   }
