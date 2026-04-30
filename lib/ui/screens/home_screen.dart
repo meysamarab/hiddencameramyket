@@ -1,4 +1,4 @@
-import 'package:flutter/material.dart';
+import 'dart:async';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../providers/app_providers.dart';
@@ -14,6 +14,7 @@ class HomeScreen extends ConsumerStatefulWidget {
 }
 
 class _HomeScreenState extends ConsumerState<HomeScreen> {
+  Timer? _recordingTimer;
   
   @override
   void initState() {
@@ -28,11 +29,16 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
     final isPremium = await iap.checkSubscription();
     ref.read(isPremiumProvider.notifier).state = isPremium;
 
-    // Listen for trial end from native
+    // Listen for events from native
     final platform = MethodChannel('com.example.hiddencam/camera_channel');
     platform.setMethodCallHandler((call) async {
-      if (call.method == 'onTrialEnded') {
-        _showTrialEndedDialog();
+      switch (call.method) {
+        case 'onTrialEnded':
+          _showTrialEndedDialog();
+          break;
+        case 'onPhotoTaken':
+          ref.read(burstPhotoCountProvider.notifier).update((state) => state + 1);
+          break;
       }
     });
   }
@@ -45,7 +51,30 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
     if (mounted) {
       ref.read(isRecordingProvider.notifier).state = isRecording;
       ref.read(isBurstActiveProvider.notifier).state = isBursting;
+      
+      if (isRecording) {
+        _startRecordingTimer();
+      }
     }
+  }
+
+  void _startRecordingTimer() {
+    _recordingTimer?.cancel();
+    _recordingTimer = Timer.periodic(const Duration(seconds: 1), (timer) {
+      ref.read(recordingDurationProvider.notifier).update((state) => state + 1);
+    });
+  }
+
+  void _stopRecordingTimer() {
+    _recordingTimer?.cancel();
+    _recordingTimer = null;
+    ref.read(recordingDurationProvider.notifier).state = 0;
+  }
+
+  @override
+  void dispose() {
+    _recordingTimer?.cancel();
+    super.dispose();
   }
 
   @override
@@ -58,6 +87,14 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
     final burstInterval = ref.watch(burstIntervalProvider);
     final cameraManager = ref.read(cameraManagerProvider);
     final isPremium = ref.watch(isPremiumProvider);
+    final recordingDuration = ref.watch(recordingDurationProvider);
+    final photoCount = ref.watch(burstPhotoCountProvider);
+
+    String formatDuration(int seconds) {
+      final minutes = (seconds / 60).floor();
+      final remainingSeconds = seconds % 60;
+      return '${minutes.toString().padLeft(2, '0')}:${remainingSeconds.toString().padLeft(2, '0')}';
+    }
 
     return Scaffold(
       extendBodyBehindAppBar: true,
@@ -93,6 +130,22 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
               _buildStatusIndicator(context, isRecording, isBurstActive, l10n),
+              if (isRecording)
+                Padding(
+                  padding: const EdgeInsets.only(top: 8.0),
+                  child: Text(
+                    formatDuration(recordingDuration),
+                    style: const TextStyle(color: Colors.redAccent, fontSize: 24, fontWeight: FontWeight.bold),
+                  ),
+                ),
+              if (isBurstActive)
+                Padding(
+                  padding: const EdgeInsets.only(top: 8.0),
+                  child: Text(
+                    'تعداد عکس: $photoCount',
+                    style: const TextStyle(color: Colors.blueAccent, fontSize: 20, fontWeight: FontWeight.bold),
+                  ),
+                ),
               const SizedBox(height: 20),
               if (!isPremium && !isRecording && !isBurstActive) _buildPremiumBanner(context),
               const SizedBox(height: 20),
@@ -109,12 +162,15 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                     onTap: () async {
                     if (isRecording) {
                       await cameraManager.stopVideoRecording();
+                      _stopRecordingTimer();
                       ref.read(isRecordingProvider.notifier).state = false;
                     } else {
+                      ref.read(recordingDurationProvider.notifier).state = 0;
                       await cameraManager.startVideoRecording(
                         direction: selectedCamera,
                         maxDurationSeconds: isPremium ? 0 : 30,
                       );
+                      _startRecordingTimer();
                       ref.read(isRecordingProvider.notifier).state = true;
                     }
                   },
@@ -139,6 +195,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                       await cameraManager.stopBurstPhoto();
                       ref.read(isBurstActiveProvider.notifier).state = false;
                     } else {
+                      ref.read(burstPhotoCountProvider.notifier).state = 0;
                       await cameraManager.startBurstPhoto(
                         direction: selectedCamera,
                         durationMinutes: burstDuration,
@@ -314,6 +371,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
   void _showTrialEndedDialog() {
     if (!mounted) return;
     
+    _stopRecordingTimer();
     // Stop any UI indicators
     ref.read(isRecordingProvider.notifier).state = false;
 

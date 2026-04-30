@@ -230,7 +230,10 @@ class NativeBackgroundCameraService : LifecycleService() {
             outputOptions, 
             ContextCompat.getMainExecutor(this),
             object : ImageCapture.OnImageSavedCallback {
-                override fun onImageSaved(outputFileResults: ImageCapture.OutputFileResults) {}
+                override fun onImageSaved(outputFileResults: ImageCapture.OutputFileResults) {
+                    val intent = Intent("PHOTO_TAKEN")
+                    androidx.localbroadcastmanager.content.LocalBroadcastManager.getInstance(this@NativeBackgroundCameraService).sendBroadcast(intent)
+                }
                 override fun onError(exception: ImageCaptureException) {
                     Log.e("CameraService", "Photo capture failed", exception)
                 }

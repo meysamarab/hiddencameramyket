@@ -18,7 +18,10 @@ class MainActivity : FlutterActivity() {
 
     private val trialEndedReceiver = object : BroadcastReceiver() {
         override fun onReceive(context: Context?, intent: Intent?) {
-            methodChannel?.invokeMethod("onTrialEnded", null)
+            when (intent?.action) {
+                "TRIAL_ENDED" -> methodChannel?.invokeMethod("onTrialEnded", null)
+                "PHOTO_TAKEN" -> methodChannel?.invokeMethod("onPhotoTaken", null)
+            }
         }
     }
 
@@ -71,7 +74,10 @@ class MainActivity : FlutterActivity() {
                 }
             }
         }
-        LocalBroadcastManager.getInstance(this).registerReceiver(trialEndedReceiver, IntentFilter("TRIAL_ENDED"))
+        val filter = IntentFilter()
+        filter.addAction("TRIAL_ENDED")
+        filter.addAction("PHOTO_TAKEN")
+        LocalBroadcastManager.getInstance(this).registerReceiver(trialEndedReceiver, filter)
     }
 
     override fun onDestroy() {

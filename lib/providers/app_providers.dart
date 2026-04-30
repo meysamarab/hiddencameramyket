@@ -19,3 +19,6 @@ final audioEnabledProvider = StateProvider<bool>((ref) => true);
 
 final burstDurationProvider = StateProvider<int>((ref) => 2); // default 2 minutes
 final burstIntervalProvider = StateProvider<int>((ref) => 5); // default 5 seconds
+
+final recordingDurationProvider = StateProvider<int>((ref) => 0); // seconds
+final burstPhotoCountProvider = StateProvider<int>((ref) => 0);
