@@ -56,4 +56,7 @@ dependencies {
     implementation("androidx.camera:camera-video:${camerax_version}")
     implementation("androidx.camera:camera-view:${camerax_version}")
     implementation("androidx.camera:camera-extensions:${camerax_version}")
+    
+    implementation("androidx.lifecycle:lifecycle-service:2.6.2")
+    implementation("com.google.guava:guava:31.1-android")
 }

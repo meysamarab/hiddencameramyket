@@ -152,7 +152,7 @@ class NativeBackgroundCameraService : LifecycleService() {
             activeRecording = videoCapture.output
                 .prepareRecording(this, mediaStoreOutputOptions)
                 .withAudioEnabled()
-                .start(ContextCompat.getMainExecutor(this)) { recordEvent ->
+                .start(ContextCompat.getMainExecutor(this)) { recordEvent: VideoRecordEvent ->
                     if (recordEvent is VideoRecordEvent.Start) {
                         isRecording = true
                     } else if (recordEvent is VideoRecordEvent.Finalize) {
