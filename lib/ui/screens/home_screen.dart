@@ -17,6 +17,7 @@ class HomeScreen extends ConsumerWidget {
     final selectedCamera = ref.watch(selectedCameraProvider);
     final burstDuration = ref.watch(burstDurationProvider);
     final burstInterval = ref.watch(burstIntervalProvider);
+    final cameraManager = ref.read(cameraManagerProvider);
 
     return Scaffold(
       extendBodyBehindAppBar: true,
@@ -68,16 +69,12 @@ class HomeScreen extends ConsumerWidget {
                   color: isRecording ? Colors.red : Theme.of(context).colorScheme.primary,
                   onTap: () async {
                     if (isRecording) {
-                      FlutterBackgroundService().invoke('stopVideo');
+                      await cameraManager.stopVideoRecording();
                       ref.read(isRecordingProvider.notifier).state = false;
                       FlutterBackgroundService().invoke('stopService');
                     } else {
                       FlutterBackgroundService().startService();
-                      // Small delay to ensure service is started
-                      await Future.delayed(const Duration(milliseconds: 500));
-                      FlutterBackgroundService().invoke('startVideo', {
-                        'direction': selectedCamera.name,
-                      });
+                      await cameraManager.startVideoRecording(direction: selectedCamera);
                       ref.read(isRecordingProvider.notifier).state = true;
                     }
                   },
@@ -91,17 +88,16 @@ class HomeScreen extends ConsumerWidget {
                   color: isBurstActive ? Colors.orange : Colors.blueAccent,
                   onTap: () async {
                     if (isBurstActive) {
-                      FlutterBackgroundService().invoke('stopBurst');
+                      await cameraManager.stopBurstPhoto();
                       ref.read(isBurstActiveProvider.notifier).state = false;
                       FlutterBackgroundService().invoke('stopService');
                     } else {
                       FlutterBackgroundService().startService();
-                      await Future.delayed(const Duration(milliseconds: 500));
-                      FlutterBackgroundService().invoke('startBurst', {
-                        'direction': selectedCamera.name,
-                        'durationMinutes': burstDuration,
-                        'intervalSeconds': burstInterval,
-                      });
+                      await cameraManager.startBurstPhoto(
+                        direction: selectedCamera,
+                        durationMinutes: burstDuration,
+                        intervalSeconds: burstInterval,
+                      );
                       ref.read(isBurstActiveProvider.notifier).state = true;
                       
                       // Auto reset after duration

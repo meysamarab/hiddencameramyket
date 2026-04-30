@@ -4,8 +4,6 @@ import 'dart:ui';
 import 'package:flutter/material.dart';
 import 'package:flutter_background_service/flutter_background_service.dart';
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
-import 'package:camera/camera.dart';
-import 'camera_manager.dart';
 
 class BackgroundCameraService {
   static const notificationId = 888;
@@ -56,7 +54,6 @@ class BackgroundCameraService {
   @pragma('vm:entry-point')
   static void onStart(ServiceInstance service) async {
     DartPluginRegistrant.ensureInitialized();
-    final cameraManager = CameraManager();
 
     if (service is AndroidServiceInstance) {
       service.on('setAsForeground').listen((event) {
@@ -69,37 +66,16 @@ class BackgroundCameraService {
     }
 
     service.on('stopService').listen((event) async {
-      await cameraManager.dispose();
       service.stopSelf();
     });
 
-    service.on('startVideo').listen((event) async {
-      final directionStr = event?['direction'] as String?;
-      final direction = directionStr == 'front' ? CameraLensDirection.front : CameraLensDirection.back;
-      await cameraManager.startVideoRecording(direction: direction);
+    // Keeping the service alive
+    Timer.periodic(const Duration(seconds: 1), (timer) async {
+      if (service is AndroidServiceInstance) {
+        if (await service.isForegroundService()) {
+          // This keeps the foreground service notification active
+        }
+      }
     });
-
-    service.on('stopVideo').listen((event) async {
-      await cameraManager.stopVideoRecording();
-    });
-    
-    service.on('startBurst').listen((event) async {
-      final directionStr = event?['direction'] as String?;
-      final direction = directionStr == 'front' ? CameraLensDirection.front : CameraLensDirection.back;
-      final duration = event?['durationMinutes'] as int? ?? 2;
-      final interval = event?['intervalSeconds'] as int? ?? 5;
-      
-      await cameraManager.startBurstPhoto(
-        direction: direction,
-        durationMinutes: duration,
-        intervalSeconds: interval,
-      );
-    });
-
-    service.on('stopBurst').listen((event) async {
-      await cameraManager.stopBurstPhoto();
-    });
-
-    // We don't necessarily need a periodic timer if we're just listening to events
   }
 }
