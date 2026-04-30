@@ -88,4 +88,22 @@ class AppLocalizationsFa extends AppLocalizations {
 
   @override
   String get onboardingStep2 => 'لطفاً تمامی مجوزهای لازم را برای عملکرد صحیح تایید کنید.';
+
+  @override
+  String get startBurst => 'شروع عکس‌برداری خودکار';
+
+  @override
+  String get stopBurst => 'توقف عکس‌برداری خودکار';
+
+  @override
+  String get burstActive => 'در حال عکس‌برداری خودکار...';
+
+  @override
+  String get burstSettings => 'تنظیمات عکس‌برداری خودکار';
+
+  @override
+  String get burstDuration => 'مدت زمان (دقیقه)';
+
+  @override
+  String get burstInterval => 'فاصله زمانی (ثانیه)';
 }

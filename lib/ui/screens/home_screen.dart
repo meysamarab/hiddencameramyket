@@ -12,9 +12,11 @@ class HomeScreen extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final isRecording = ref.watch(isRecordingProvider);
+    final isBurstActive = ref.watch(isBurstActiveProvider);
     final l10n = AppLocalizations.of(context)!;
-    final cameraManager = ref.read(cameraManagerProvider);
     final selectedCamera = ref.watch(selectedCameraProvider);
+    final burstDuration = ref.watch(burstDurationProvider);
+    final burstInterval = ref.watch(burstIntervalProvider);
 
     return Scaffold(
       extendBodyBehindAppBar: true,
@@ -56,38 +58,58 @@ class HomeScreen extends ConsumerWidget {
           child: Column(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              _buildStatusIndicator(context, isRecording, l10n),
+              _buildStatusIndicator(context, isRecording, isBurstActive, l10n),
               const SizedBox(height: 60),
-              _buildActionButton(
-                context: context,
-                label: isRecording ? l10n.stopRecording : l10n.startRecording,
-                icon: isRecording ? Icons.stop_rounded : Icons.videocam_rounded,
-                color: isRecording ? Colors.red : Theme.of(context).colorScheme.primary,
-                onTap: () async {
-                  if (isRecording) {
-                    await cameraManager.stopVideoRecording();
-                    ref.read(isRecordingProvider.notifier).state = false;
-                    FlutterBackgroundService().invoke('stopService');
-                  } else {
-                    FlutterBackgroundService().startService();
-                    await cameraManager.startVideoRecording(direction: selectedCamera);
-                    ref.read(isRecordingProvider.notifier).state = true;
-                  }
-                },
-              ),
+              if (!isBurstActive)
+                _buildActionButton(
+                  context: context,
+                  label: isRecording ? l10n.stopRecording : l10n.startRecording,
+                  icon: isRecording ? Icons.stop_rounded : Icons.videocam_rounded,
+                  color: isRecording ? Colors.red : Theme.of(context).colorScheme.primary,
+                  onTap: () async {
+                    if (isRecording) {
+                      FlutterBackgroundService().invoke('stopVideo');
+                      ref.read(isRecordingProvider.notifier).state = false;
+                      FlutterBackgroundService().invoke('stopService');
+                    } else {
+                      FlutterBackgroundService().startService();
+                      // Small delay to ensure service is started
+                      await Future.delayed(const Duration(milliseconds: 500));
+                      FlutterBackgroundService().invoke('startVideo', {
+                        'direction': selectedCamera.name,
+                      });
+                      ref.read(isRecordingProvider.notifier).state = true;
+                    }
+                  },
+                ),
               const SizedBox(height: 24),
               if (!isRecording)
                 _buildActionButton(
                   context: context,
-                  label: l10n.takePhoto,
-                  icon: Icons.camera_alt_rounded,
-                  color: Colors.blueAccent,
+                  label: isBurstActive ? (l10n.stopBurst ?? 'توقف عکس‌برداری خودکار') : (l10n.startBurst ?? 'شروع عکس‌برداری خودکار'),
+                  icon: isBurstActive ? Icons.stop_circle_rounded : Icons.camera_timer_rounded,
+                  color: isBurstActive ? Colors.orange : Colors.blueAccent,
                   onTap: () async {
-                    await cameraManager.takePhoto(direction: selectedCamera);
-                    if (context.mounted) {
-                      ScaffoldMessenger.of(context).showSnackBar(
-                        SnackBar(content: Text(l10n.photoCaptured)),
-                      );
+                    if (isBurstActive) {
+                      FlutterBackgroundService().invoke('stopBurst');
+                      ref.read(isBurstActiveProvider.notifier).state = false;
+                      FlutterBackgroundService().invoke('stopService');
+                    } else {
+                      FlutterBackgroundService().startService();
+                      await Future.delayed(const Duration(milliseconds: 500));
+                      FlutterBackgroundService().invoke('startBurst', {
+                        'direction': selectedCamera.name,
+                        'durationMinutes': burstDuration,
+                        'intervalSeconds': burstInterval,
+                      });
+                      ref.read(isBurstActiveProvider.notifier).state = true;
+                      
+                      // Auto reset after duration
+                      Future.delayed(Duration(minutes: burstDuration), () {
+                         if (context.mounted) {
+                           ref.read(isBurstActiveProvider.notifier).state = false;
+                         }
+                      });
                     }
                   },
                 ),
@@ -98,13 +120,16 @@ class HomeScreen extends ConsumerWidget {
     );
   }
 
-  Widget _buildStatusIndicator(BuildContext context, bool isRecording, AppLocalizations l10n) {
+  Widget _buildStatusIndicator(BuildContext context, bool isRecording, bool isBurstActive, AppLocalizations l10n) {
+    final isActive = isRecording || isBurstActive;
+    final activeColor = isRecording ? Colors.red : Colors.orange;
+    
     return Column(
       children: [
         Stack(
           alignment: Alignment.center,
           children: [
-            if (isRecording)
+            if (isActive)
               TweenAnimationBuilder<double>(
                 tween: Tween(begin: 1.0, end: 1.5),
                 duration: const Duration(seconds: 1),
@@ -116,7 +141,7 @@ class HomeScreen extends ConsumerWidget {
                     decoration: BoxDecoration(
                       shape: BoxShape.circle,
                       border: Border.all(
-                        color: Colors.red.withOpacity(0.5 / value),
+                        color: activeColor.withOpacity(0.5 / value),
                         width: 2,
                       ),
                     ),
@@ -127,27 +152,29 @@ class HomeScreen extends ConsumerWidget {
               width: 140,
               height: 140,
               decoration: BoxDecoration(
-                color: isRecording ? Colors.red.withOpacity(0.1) : Colors.white.withOpacity(0.05),
+                color: isActive ? activeColor.withOpacity(0.1) : Colors.white.withOpacity(0.05),
                 shape: BoxShape.circle,
                 border: Border.all(
-                  color: isRecording ? Colors.red : Colors.white24,
+                  color: isActive ? activeColor : Colors.white24,
                   width: 2,
                 ),
               ),
               child: Icon(
-                isRecording ? Icons.mic_none_rounded : Icons.videocam_off_rounded,
+                isRecording ? Icons.mic_none_rounded : 
+                (isBurstActive ? Icons.camera_rounded : Icons.videocam_off_rounded),
                 size: 64,
-                color: isRecording ? Colors.red : Colors.white54,
+                color: isActive ? activeColor : Colors.white54,
               ),
             ),
           ],
         ),
         const SizedBox(height: 24),
         Text(
-          isRecording ? l10n.recordingStarted : l10n.appTitle,
+          isRecording ? l10n.recordingStarted : 
+          (isBurstActive ? (l10n.burstActive ?? 'در حال عکس‌برداری خودکار...') : l10n.appTitle),
           style: Theme.of(context).textTheme.headlineSmall?.copyWith(
                 fontWeight: FontWeight.bold,
-                color: isRecording ? Colors.red : Colors.white,
+                color: isActive ? activeColor : Colors.white,
               ),
         ),
       ],

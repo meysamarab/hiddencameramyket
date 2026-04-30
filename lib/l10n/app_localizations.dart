@@ -256,6 +256,42 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Please approve all necessary permissions for correct operation.'**
   String get onboardingStep2;
+
+  /// No description provided for @startBurst.
+  ///
+  /// In en, this message translates to:
+  /// **'Start Burst Photo'**
+  String get startBurst;
+
+  /// No description provided for @stopBurst.
+  ///
+  /// In en, this message translates to:
+  /// **'Stop Burst Photo'**
+  String get stopBurst;
+
+  /// No description provided for @burstActive.
+  ///
+  /// In en, this message translates to:
+  /// **'Burst photo active...'**
+  String get burstActive;
+
+  /// No description provided for @burstSettings.
+  ///
+  /// In en, this message translates to:
+  /// **'Burst Photo Settings'**
+  String get burstSettings;
+
+  /// No description provided for @burstDuration.
+  ///
+  /// In en, this message translates to:
+  /// **'Duration (minutes)'**
+  String get burstDuration;
+
+  /// No description provided for @burstInterval.
+  ///
+  /// In en, this message translates to:
+  /// **'Interval (seconds)'**
+  String get burstInterval;
 }
 
 class _AppLocalizationsDelegate extends LocalizationsDelegate<AppLocalizations> {

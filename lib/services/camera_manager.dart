@@ -1,4 +1,5 @@
 import 'dart:io';
+import 'dart:async';
 import 'package:camera/camera.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:path/path.dart' as p;
@@ -8,8 +9,12 @@ class CameraManager {
   CameraController? _controller;
   List<CameraDescription>? _cameras;
   bool _isRecording = false;
+  
+  Timer? _burstTimer;
+  bool _isBurstActive = false;
 
   bool get isRecording => _isRecording;
+  bool get isBurstActive => _isBurstActive;
 
   Future<void> initialize() async {
     _cameras = await availableCameras();
@@ -48,8 +53,10 @@ class CameraManager {
     // Save to system gallery
     await Gal.putVideo(savedFile.path);
     
-    await _controller!.dispose();
-    _controller = null;
+    if (!_isBurstActive) {
+      await _controller!.dispose();
+      _controller = null;
+    }
     
     return savedFile.path;
   }
@@ -62,13 +69,17 @@ class CameraManager {
       orElse: () => _cameras!.first,
     );
 
-    _controller = CameraController(
-      camera,
-      ResolutionPreset.high,
-      enableAudio: false,
-    );
+    bool shouldDispose = false;
+    if (_controller == null) {
+      _controller = CameraController(
+        camera,
+        ResolutionPreset.high,
+        enableAudio: false,
+      );
+      await _controller!.initialize();
+      shouldDispose = true;
+    }
 
-    await _controller!.initialize();
     final file = await _controller!.takePicture();
     
     // Save to permanent storage for in-app gallery
@@ -79,13 +90,77 @@ class CameraManager {
     // Save to system gallery
     await Gal.putImage(savedFile.path);
 
-    await _controller!.dispose();
-    _controller = null;
+    if (shouldDispose && !_isBurstActive && !_isRecording) {
+      await _controller!.dispose();
+      _controller = null;
+    }
 
     return savedFile.path;
   }
 
+  Future<void> startBurstPhoto({
+    CameraLensDirection direction = CameraLensDirection.back,
+    required int durationMinutes,
+    required int intervalSeconds,
+  }) async {
+    if (_cameras == null || _cameras!.isEmpty) await initialize();
+    
+    final camera = _cameras!.firstWhere(
+      (c) => c.lensDirection == direction,
+      orElse: () => _cameras!.first,
+    );
+
+    if (_controller == null) {
+      _controller = CameraController(
+        camera,
+        ResolutionPreset.high,
+        enableAudio: false,
+      );
+      await _controller!.initialize();
+    }
+
+    _isBurstActive = true;
+    final endTime = DateTime.now().add(Duration(minutes: durationMinutes));
+
+    // Take the first photo immediately
+    _takeBurstPhotoWrapper();
+
+    _burstTimer = Timer.periodic(Duration(seconds: intervalSeconds), (timer) async {
+      if (DateTime.now().isAfter(endTime) || !_isBurstActive) {
+        await stopBurstPhoto();
+        return;
+      }
+      _takeBurstPhotoWrapper();
+    });
+  }
+
+  Future<void> _takeBurstPhotoWrapper() async {
+    try {
+      if (_controller != null && _controller!.value.isInitialized) {
+         final file = await _controller!.takePicture();
+         final appDir = await getApplicationDocumentsDirectory();
+         final fileName = 'photo_${DateTime.now().millisecondsSinceEpoch}.jpg';
+         final savedFile = await File(file.path).copy(p.join(appDir.path, fileName));
+         await Gal.putImage(savedFile.path);
+      }
+    } catch (e) {
+      print("Burst photo capture error: \$e");
+    }
+  }
+
+  Future<void> stopBurstPhoto() async {
+    _isBurstActive = false;
+    _burstTimer?.cancel();
+    _burstTimer = null;
+    
+    if (!_isRecording && _controller != null) {
+      await _controller!.dispose();
+      _controller = null;
+    }
+  }
+
   Future<void> dispose() async {
+    await stopBurstPhoto();
     await _controller?.dispose();
   }
 }

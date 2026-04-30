@@ -88,4 +88,22 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get onboardingStep2 => 'Please approve all necessary permissions for correct operation.';
+
+  @override
+  String get startBurst => 'Start Burst Photo';
+
+  @override
+  String get stopBurst => 'Stop Burst Photo';
+
+  @override
+  String get burstActive => 'Burst photo active...';
+
+  @override
+  String get burstSettings => 'Burst Photo Settings';
+
+  @override
+  String get burstDuration => 'Duration (minutes)';
+
+  @override
+  String get burstInterval => 'Interval (seconds)';
 }

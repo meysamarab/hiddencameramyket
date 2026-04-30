@@ -26,5 +26,11 @@
   "notificationContent": "Running in background for your safety",
   "onboardingWelcome": "Welcome to HiddenCam",
   "onboardingStep1": "This app allows you to record videos secretly.",
-  "onboardingStep2": "Please approve all necessary permissions for correct operation."
+  "onboardingStep2": "Please approve all necessary permissions for correct operation.",
+  "startBurst": "Start Burst Photo",
+  "stopBurst": "Stop Burst Photo",
+  "burstActive": "Burst photo active...",
+  "burstSettings": "Burst Photo Settings",
+  "burstDuration": "Duration (minutes)",
+  "burstInterval": "Interval (seconds)"
 }
