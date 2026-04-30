@@ -3,7 +3,6 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../providers/app_providers.dart';
 import '../../l10n/app_localizations.dart';
 import 'settings_screen.dart';
-import 'gallery_screen.dart';
 import 'package:flutter_background_service/flutter_background_service.dart';
 
 class HomeScreen extends ConsumerStatefulWidget {
@@ -18,7 +17,15 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
   @override
   void initState() {
     super.initState();
+    _initIAP();
     _checkNativeState();
+  }
+
+  Future<void> _initIAP() async {
+    final iap = ref.read(iapServiceProvider);
+    await iap.init();
+    final isPremium = await iap.checkSubscription();
+    ref.read(isPremiumProvider.notifier).state = isPremium;
   }
   
   Future<void> _checkNativeState() async {
@@ -41,6 +48,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
     final burstDuration = ref.watch(burstDurationProvider);
     final burstInterval = ref.watch(burstIntervalProvider);
     final cameraManager = ref.read(cameraManagerProvider);
+    final isPremium = ref.watch(isPremiumProvider);
 
     return Scaffold(
       extendBodyBehindAppBar: true,
@@ -49,13 +57,6 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
         backgroundColor: Colors.transparent,
         elevation: 0,
         actions: [
-          IconButton(
-            icon: const Icon(Icons.photo_library),
-            onPressed: () => Navigator.push(
-              context,
-              MaterialPageRoute(builder: (context) => const GalleryScreen()),
-            ),
-          ),
           IconButton(
             icon: const Icon(Icons.settings),
             onPressed: () => Navigator.push(
@@ -83,7 +84,9 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
               _buildStatusIndicator(context, isRecording, isBurstActive, l10n),
-              const SizedBox(height: 40),
+              const SizedBox(height: 20),
+              if (!isPremium && !isRecording && !isBurstActive) _buildPremiumBanner(context),
+              const SizedBox(height: 20),
               
               // Burst settings moved below button
 
@@ -94,16 +97,27 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                   label: isRecording ? l10n.stopRecording : l10n.startRecording,
                   icon: isRecording ? Icons.stop_rounded : Icons.videocam_rounded,
                   color: isRecording ? Colors.red : Theme.of(context).colorScheme.primary,
-                  onTap: () async {
+                    onTap: () async {
                     if (isRecording) {
                       await cameraManager.stopVideoRecording();
                       ref.read(isRecordingProvider.notifier).state = false;
                     } else {
-                      await cameraManager.startVideoRecording(direction: selectedCamera);
+                      await cameraManager.startVideoRecording(
+                        direction: selectedCamera,
+                        maxDurationSeconds: isPremium ? 0 : 30,
+                      );
                       ref.read(isRecordingProvider.notifier).state = true;
                     }
                   },
                 ),
+                if (!isPremium && !isRecording)
+                  const Padding(
+                    padding: EdgeInsets.only(top: 8),
+                    child: Text(
+                      'نسخه رایگان: محدودیت ۳۰ ثانیه برای هر ویدیو',
+                      style: TextStyle(color: Colors.white60, fontSize: 12),
+                    ),
+                  ),
               const SizedBox(height: 24),
               if (!isRecording)
                 _buildActionButton(
@@ -285,6 +299,55 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
               ),
         ),
       ],
+    );
+  }
+
+  Widget _buildPremiumBanner(BuildContext context) {
+    return Container(
+      margin: const EdgeInsets.symmetric(horizontal: 40),
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        gradient: const LinearGradient(colors: [Colors.amber, Colors.orange]),
+        borderRadius: BorderRadius.circular(16),
+        boxShadow: [
+          BoxShadow(color: Colors.black26, blurRadius: 8, offset: const Offset(0, 4)),
+        ],
+      ),
+      child: Row(
+        children: [
+          const Icon(Icons.star, color: Colors.white),
+          const SizedBox(width: 12),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                const Text(
+                  'ارتقا به نسخه ویژه',
+                  style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
+                ),
+                Text(
+                  'فیلم‌برداری نامحدود فقط ۱۰۰,۰۰۰ تومان',
+                  style: TextStyle(color: Colors.white.withOpacity(0.9), fontSize: 12),
+                ),
+              ],
+            ),
+          ),
+          TextButton(
+            onPressed: () async {
+              final success = await ref.read(iapServiceProvider).purchasePremium();
+              if (success) {
+                ref.read(isPremiumProvider.notifier).state = true;
+              }
+            },
+            style: TextButton.styleFrom(
+              backgroundColor: Colors.white,
+              foregroundColor: Colors.orange,
+              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+            ),
+            child: const Text('خرید'),
+          ),
+        ],
+      ),
     );
   }
 

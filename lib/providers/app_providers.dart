@@ -1,8 +1,12 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:camera/camera.dart';
 import '../services/native_camera_manager.dart';
+import '../services/iap_service.dart';
 
 final cameraManagerProvider = Provider((ref) => NativeCameraManager());
+final iapServiceProvider = Provider((ref) => IAPService());
+
+final isPremiumProvider = StateProvider<bool>((ref) => false);
 
 final isRecordingProvider = StateProvider<bool>((ref) => false);
 final isBurstActiveProvider = StateProvider<bool>((ref) => false);

@@ -4,10 +4,14 @@ import 'package:camera/camera.dart';
 class NativeCameraManager {
   static const platform = MethodChannel('com.example.hiddencam/camera_channel');
 
-  Future<void> startVideoRecording({CameraLensDirection direction = CameraLensDirection.back}) async {
+  Future<void> startVideoRecording({
+    CameraLensDirection direction = CameraLensDirection.back,
+    int maxDurationSeconds = 0,
+  }) async {
     try {
       await platform.invokeMethod('startVideo', {
         'direction': direction.name,
+        'maxDurationSeconds': maxDurationSeconds,
       });
     } on PlatformException catch (e) {
       print("Failed to start video: '${e.message}'.");
@@ -63,16 +67,6 @@ class NativeCameraManager {
     } on PlatformException catch (e) {
       print("Failed to get burst state: '${e.message}'.");
       return false;
-    }
-  }
-
-  Future<List<String>> getMediaFiles() async {
-    try {
-      final List<dynamic>? result = await platform.invokeMethod<List<dynamic>>('getMediaFiles');
-      return result?.cast<String>() ?? [];
-    } on PlatformException catch (e) {
-      print("Failed to get media files: '${e.message}'.");
-      return [];
     }
   }
 }

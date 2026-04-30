@@ -41,6 +41,7 @@ class NativeBackgroundCameraService : LifecycleService() {
         const val EXTRA_DIRECTION = "DIRECTION"
         const val EXTRA_DURATION = "DURATION"
         const val EXTRA_INTERVAL = "INTERVAL"
+        const val EXTRA_MAX_DURATION = "MAX_DURATION"
         var instance: NativeBackgroundCameraService? = null
     }
 
@@ -77,7 +78,10 @@ class NativeBackgroundCameraService : LifecycleService() {
             val lensDirection = if (directionStr == "front") CameraSelector.LENS_FACING_FRONT else CameraSelector.LENS_FACING_BACK
 
             when (it.action) {
-                ACTION_START_VIDEO -> startVideo(lensDirection)
+                ACTION_START_VIDEO -> {
+                    val maxDuration = it.getIntExtra(EXTRA_MAX_DURATION, 0)
+                    startVideo(lensDirection, maxDuration)
+                }
                 ACTION_STOP_VIDEO -> stopVideo()
                 ACTION_START_BURST -> {
                     val duration = it.getIntExtra(EXTRA_DURATION, 2)
@@ -133,7 +137,7 @@ class NativeBackgroundCameraService : LifecycleService() {
     }
 
     @SuppressLint("MissingPermission")
-    private fun startVideo(lensDirection: Int) {
+    private fun startVideo(lensDirection: Int, maxDurationSeconds: Int = 0) {
         if (isRecording) return
         
         setupCamera(lensDirection, true) {
@@ -159,6 +163,12 @@ class NativeBackgroundCameraService : LifecycleService() {
                 .start(ContextCompat.getMainExecutor(this)) { recordEvent: VideoRecordEvent ->
                     if (recordEvent is VideoRecordEvent.Start) {
                         isRecording = true
+                        
+                        if (maxDurationSeconds > 0) {
+                            android.os.Handler(android.os.Looper.getMainLooper()).postDelayed({
+                                if (isRecording) stopVideo()
+                            }, maxDurationSeconds * 1000L)
+                        }
                     } else if (recordEvent is VideoRecordEvent.Finalize) {
                         isRecording = false
                         if (!isBursting) stopSelf()
