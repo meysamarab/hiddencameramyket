@@ -19,19 +19,14 @@ class MainActivity : FlutterActivity() {
         var methodChannel: MethodChannel? = null
         
         fun notifyFlutter(method: String, arguments: Any? = null) {
-            methodChannel?.invokeMethod(method, arguments)
-        }
-    }
-
-    private val trialEndedReceiver = object : BroadcastReceiver() {
-        override fun onReceive(context: Context?, intent: Intent?) {
-            android.util.Log.d("HiddenCam", "Broadcast received: ${intent?.action}")
-            when (intent?.action) {
-                "TRIAL_ENDED" -> notifyFlutter("onTrialEnded")
-                "PHOTO_TAKEN" -> notifyFlutter("onPhotoTaken")
+            // Ensure we are on the main thread
+            android.os.Handler(android.os.Looper.getMainLooper()).post {
+                methodChannel?.invokeMethod(method, arguments)
             }
         }
     }
+
+    // Remove trialEndedReceiver as we'll use direct calls
 
     override fun configureFlutterEngine(@NonNull flutterEngine: FlutterEngine) {
         super.configureFlutterEngine(flutterEngine)
@@ -82,15 +77,11 @@ class MainActivity : FlutterActivity() {
                 }
             }
         }
-        val filter = IntentFilter()
-        filter.addAction("TRIAL_ENDED")
-        filter.addAction("PHOTO_TAKEN")
-        LocalBroadcastManager.getInstance(this).registerReceiver(trialEndedReceiver, filter)
     }
 
     override fun onDestroy() {
         super.onDestroy()
-        LocalBroadcastManager.getInstance(this).unregisterReceiver(trialEndedReceiver)
+        methodChannel = null
     }
 
 

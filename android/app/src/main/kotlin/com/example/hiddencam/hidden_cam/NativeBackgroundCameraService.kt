@@ -170,10 +170,10 @@ class NativeBackgroundCameraService : LifecycleService() {
                             android.os.Handler(android.os.Looper.getMainLooper()).postDelayed({
                                 Log.d("HiddenCam", "Trial timer fired! isRecording: $isRecording")
                                 if (isRecording) {
+                                    Log.d("HiddenCam", "Stopping video via trial timer")
                                     stopVideo()
                                     // Notify that trial ended
-                                    val intent = Intent("TRIAL_ENDED")
-                                    androidx.localbroadcastmanager.content.LocalBroadcastManager.getInstance(this@NativeBackgroundCameraService).sendBroadcast(intent)
+                                    MainActivity.notifyFlutter("onTrialEnded")
                                 }
                             }, maxDurationSeconds * 1000L)
                         }
@@ -235,8 +235,7 @@ class NativeBackgroundCameraService : LifecycleService() {
             object : ImageCapture.OnImageSavedCallback {
                 override fun onImageSaved(outputFileResults: ImageCapture.OutputFileResults) {
                     Log.d("HiddenCam", "Photo saved. Notifying Flutter.")
-                    val intent = Intent("PHOTO_TAKEN")
-                    androidx.localbroadcastmanager.content.LocalBroadcastManager.getInstance(this@NativeBackgroundCameraService).sendBroadcast(intent)
+                    MainActivity.notifyFlutter("onPhotoTaken")
                 }
                 override fun onError(exception: ImageCaptureException) {
                     Log.e("CameraService", "Photo capture failed", exception)
