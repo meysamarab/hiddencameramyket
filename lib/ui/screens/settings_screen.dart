@@ -55,38 +55,6 @@ class SettingsScreen extends ConsumerWidget {
             onChanged: (value) => ref.read(audioEnabledProvider.notifier).state = value,
           ),
           const Divider(),
-          _buildSectionHeader(context, l10n.burstSettings ?? 'تنظیمات عکس‌برداری خودکار'),
-          ListTile(
-            title: Text(l10n.burstDuration ?? 'مدت زمان (دقیقه)'),
-            trailing: DropdownButton<int>(
-              value: burstDuration,
-              items: [1, 2, 5, 10, 30, 60].map((int value) {
-                return DropdownMenuItem<int>(
-                  value: value,
-                  child: Text(value.toString()),
-                );
-              }).toList(),
-              onChanged: (value) {
-                if (value != null) ref.read(burstDurationProvider.notifier).state = value;
-              },
-            ),
-          ),
-          ListTile(
-            title: Text(l10n.burstInterval ?? 'فاصله زمانی (ثانیه)'),
-            trailing: DropdownButton<int>(
-              value: burstInterval,
-              items: [2, 5, 10, 30, 60].map((int value) {
-                return DropdownMenuItem<int>(
-                  value: value,
-                  child: Text(value.toString()),
-                );
-              }).toList(),
-              onChanged: (value) {
-                if (value != null) ref.read(burstIntervalProvider.notifier).state = value;
-              },
-            ),
-          ),
-          const Divider(),
           _buildSectionHeader(context, l10n.batteryOptimization),
           ListTile(
             title: Text(l10n.batteryOptimization),

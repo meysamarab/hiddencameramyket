@@ -45,4 +45,24 @@ class NativeCameraManager {
       print("Failed to stop burst: '${e.message}'.");
     }
   }
+
+  Future<bool> isRecording() async {
+    try {
+      final result = await platform.invokeMethod<bool>('isRecording');
+      return result ?? false;
+    } on PlatformException catch (e) {
+      print("Failed to get recording state: '${e.message}'.");
+      return false;
+    }
+  }
+
+  Future<bool> isBursting() async {
+    try {
+      final result = await platform.invokeMethod<bool>('isBursting');
+      return result ?? false;
+    } on PlatformException catch (e) {
+      print("Failed to get burst state: '${e.message}'.");
+      return false;
+    }
+  }
 }

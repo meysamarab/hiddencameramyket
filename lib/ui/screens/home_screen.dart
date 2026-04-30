@@ -6,11 +6,34 @@ import 'settings_screen.dart';
 import 'gallery_screen.dart';
 import 'package:flutter_background_service/flutter_background_service.dart';
 
-class HomeScreen extends ConsumerWidget {
+class HomeScreen extends ConsumerStatefulWidget {
   const HomeScreen({super.key});
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
+  ConsumerState<HomeScreen> createState() => _HomeScreenState();
+}
+
+class _HomeScreenState extends ConsumerState<HomeScreen> {
+  
+  @override
+  void initState() {
+    super.initState();
+    _checkNativeState();
+  }
+  
+  Future<void> _checkNativeState() async {
+    final cameraManager = ref.read(cameraManagerProvider);
+    final isRecording = await cameraManager.isRecording();
+    final isBursting = await cameraManager.isBursting();
+    
+    if (mounted) {
+      ref.read(isRecordingProvider.notifier).state = isRecording;
+      ref.read(isBurstActiveProvider.notifier).state = isBursting;
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
     final isRecording = ref.watch(isRecordingProvider);
     final isBurstActive = ref.watch(isBurstActiveProvider);
     final l10n = AppLocalizations.of(context)!;
@@ -60,7 +83,13 @@ class HomeScreen extends ConsumerWidget {
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
               _buildStatusIndicator(context, isRecording, isBurstActive, l10n),
-              const SizedBox(height: 60),
+              const SizedBox(height: 40),
+              
+              if (!isBurstActive && !isRecording) ...[
+                _buildBurstSettings(context, burstDuration, burstInterval, l10n),
+                const SizedBox(height: 30),
+              ],
+              
               if (!isBurstActive)
                 _buildActionButton(
                   context: context,
@@ -98,7 +127,7 @@ class HomeScreen extends ConsumerWidget {
                       
                       // Auto reset after duration
                       Future.delayed(Duration(minutes: burstDuration), () {
-                         if (context.mounted) {
+                         if (mounted) {
                            ref.read(isBurstActiveProvider.notifier).state = false;
                          }
                       });
@@ -108,6 +137,71 @@ class HomeScreen extends ConsumerWidget {
             ],
           ),
         ),
+      ),
+    );
+  }
+
+  Widget _buildBurstSettings(BuildContext context, int duration, int interval, AppLocalizations l10n) {
+    return Container(
+      margin: const EdgeInsets.symmetric(horizontal: 40),
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: Colors.white.withOpacity(0.05),
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: Colors.white24),
+      ),
+      child: Column(
+        children: [
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Text(
+                l10n.burstDuration ?? 'مدت زمان (دقیقه)',
+                style: const TextStyle(color: Colors.white70),
+              ),
+              DropdownButton<int>(
+                dropdownColor: Theme.of(context).colorScheme.surface,
+                style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
+                underline: const SizedBox(),
+                value: duration,
+                items: [1, 2, 5, 10, 30, 60].map((int value) {
+                  return DropdownMenuItem<int>(
+                    value: value,
+                    child: Text('$value min'),
+                  );
+                }).toList(),
+                onChanged: (value) {
+                  if (value != null) ref.read(burstDurationProvider.notifier).state = value;
+                },
+              ),
+            ],
+          ),
+          const Divider(color: Colors.white12),
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Text(
+                l10n.burstInterval ?? 'فاصله زمانی (ثانیه)',
+                style: const TextStyle(color: Colors.white70),
+              ),
+              DropdownButton<int>(
+                dropdownColor: Theme.of(context).colorScheme.surface,
+                style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
+                underline: const SizedBox(),
+                value: interval,
+                items: [2, 5, 10, 30, 60].map((int value) {
+                  return DropdownMenuItem<int>(
+                    value: value,
+                    child: Text('$value sec'),
+                  );
+                }).toList(),
+                onChanged: (value) {
+                  if (value != null) ref.read(burstIntervalProvider.notifier).state = value;
+                },
+              ),
+            ],
+          ),
+        ],
       ),
     );
   }

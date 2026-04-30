@@ -27,8 +27,8 @@ class NativeBackgroundCameraService : LifecycleService() {
     private var activeRecording: Recording? = null
     private var burstTimer: Timer? = null
     
-    private var isRecording = false
-    private var isBursting = false
+    var isRecording = false
+    var isBursting = false
 
     companion object {
         const val CHANNEL_ID = "hiddencam_native_channel"
@@ -40,15 +40,18 @@ class NativeBackgroundCameraService : LifecycleService() {
         const val EXTRA_DIRECTION = "DIRECTION"
         const val EXTRA_DURATION = "DURATION"
         const val EXTRA_INTERVAL = "INTERVAL"
+        var instance: NativeBackgroundCameraService? = null
     }
 
     override fun onCreate() {
         super.onCreate()
+        instance = this
         createNotificationChannel()
     }
     
     override fun onDestroy() {
         super.onDestroy()
+        instance = null
         stopAll()
     }
 

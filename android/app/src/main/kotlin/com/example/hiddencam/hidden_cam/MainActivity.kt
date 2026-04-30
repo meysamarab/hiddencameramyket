@@ -43,6 +43,14 @@ class MainActivity : FlutterActivity() {
                     startServiceIntent(intent)
                     result.success(null)
                 }
+                "isRecording" -> {
+                    val isRecording = NativeBackgroundCameraService.instance?.isRecording ?: false
+                    result.success(isRecording)
+                }
+                "isBursting" -> {
+                    val isBursting = NativeBackgroundCameraService.instance?.isBursting ?: false
+                    result.success(isBursting)
+                }
                 else -> {
                     result.notImplemented()
                 }
