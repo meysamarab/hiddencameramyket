@@ -1,6 +1,11 @@
 package com.example.hiddencam.hidden_cam
 
 import android.content.Intent
+import android.net.Uri
+import android.content.Context
+import android.content.BroadcastReceiver
+import android.content.IntentFilter
+import androidx.localbroadcastmanager.content.LocalBroadcastManager
 import android.os.Build
 import androidx.annotation.NonNull
 import io.flutter.embedding.android.FlutterActivity
@@ -9,11 +14,19 @@ import io.flutter.plugin.common.MethodChannel
 
 class MainActivity : FlutterActivity() {
     private val CHANNEL = "com.example.hiddencam/camera_channel"
+    private var methodChannel: MethodChannel? = null
+
+    private val trialEndedReceiver = object : BroadcastReceiver() {
+        override fun onReceive(context: Context?, intent: Intent?) {
+            methodChannel?.invokeMethod("onTrialEnded", null)
+        }
+    }
 
     override fun configureFlutterEngine(@NonNull flutterEngine: FlutterEngine) {
         super.configureFlutterEngine(flutterEngine)
         
-        MethodChannel(flutterEngine.dartExecutor.binaryMessenger, CHANNEL).setMethodCallHandler { call, result ->
+        methodChannel = MethodChannel(flutterEngine.dartExecutor.binaryMessenger, CHANNEL)
+        methodChannel?.setMethodCallHandler { call, result ->
             val intent = Intent(this, NativeBackgroundCameraService::class.java)
             
             when (call.method) {
@@ -58,6 +71,12 @@ class MainActivity : FlutterActivity() {
                 }
             }
         }
+        LocalBroadcastManager.getInstance(this).registerReceiver(trialEndedReceiver, IntentFilter("TRIAL_ENDED"))
+    }
+
+    override fun onDestroy() {
+        super.onDestroy()
+        LocalBroadcastManager.getInstance(this).unregisterReceiver(trialEndedReceiver)
     }
 
 

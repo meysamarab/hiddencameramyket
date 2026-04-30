@@ -26,6 +26,14 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
     await iap.init();
     final isPremium = await iap.checkSubscription();
     ref.read(isPremiumProvider.notifier).state = isPremium;
+
+    // Listen for trial end from native
+    const platform = MethodChannel('com.example.hiddencam/camera_channel');
+    platform.setMethodCallHandler((call) async {
+      if (call.method == 'onTrialEnded') {
+        _showTrialEndedDialog();
+      }
+    });
   }
   
   Future<void> _checkNativeState() async {
@@ -299,6 +307,54 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
               ),
         ),
       ],
+    );
+  }
+
+  void _showTrialEndedDialog() {
+    if (!mounted) return;
+    
+    // Stop any UI indicators
+    ref.read(isRecordingProvider.notifier).state = false;
+
+    showDialog(
+      context: context,
+      barrierDismissible: false,
+      builder: (context) => AlertDialog(
+        backgroundColor: Colors.grey[900],
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+        title: const Row(
+          children: [
+            Icon(Icons.warning_amber_rounded, color: Colors.orange),
+            SizedBox(width: 10),
+            Text('پایان زمان تست', style: TextStyle(color: Colors.white)),
+          ],
+        ),
+        content: const Text(
+          'زمان ۳۰ ثانیه‌ای تست رایگان به پایان رسید. برای ضبط طولانی‌تر، لطفاً اشتراک تهیه کنید.',
+          style: TextStyle(color: Colors.white70),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: const Text('متوجه شدم', style: TextStyle(color: Colors.white60)),
+          ),
+          ElevatedButton(
+            onPressed: () async {
+              Navigator.pop(context);
+              final success = await ref.read(iapServiceProvider).purchasePremium();
+              if (success) {
+                ref.read(isPremiumProvider.notifier).state = true;
+              }
+            },
+            style: ElevatedButton.styleFrom(
+              backgroundColor: Colors.orange,
+              foregroundColor: Colors.white,
+              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+            ),
+            child: const Text('ارتقا به ویژه'),
+          ),
+        ],
+      ),
     );
   }
 

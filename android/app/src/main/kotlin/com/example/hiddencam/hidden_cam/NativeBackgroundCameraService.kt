@@ -166,7 +166,12 @@ class NativeBackgroundCameraService : LifecycleService() {
                         
                         if (maxDurationSeconds > 0) {
                             android.os.Handler(android.os.Looper.getMainLooper()).postDelayed({
-                                if (isRecording) stopVideo()
+                                if (isRecording) {
+                                    stopVideo()
+                                    // Notify that trial ended
+                                    val intent = Intent("TRIAL_ENDED")
+                                    androidx.localbroadcastmanager.content.LocalBroadcastManager.getInstance(this@NativeBackgroundCameraService).sendBroadcast(intent)
+                                }
                             }, maxDurationSeconds * 1000L)
                         }
                     } else if (recordEvent is VideoRecordEvent.Finalize) {
