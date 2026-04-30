@@ -87,7 +87,7 @@ class HomeScreen extends ConsumerWidget {
                 _buildActionButton(
                   context: context,
                   label: isBurstActive ? (l10n.stopBurst ?? 'توقف عکس‌برداری خودکار') : (l10n.startBurst ?? 'شروع عکس‌برداری خودکار'),
-                  icon: isBurstActive ? Icons.stop_circle_rounded : Icons.camera_timer_rounded,
+                  icon: isBurstActive ? Icons.stop_circle_rounded : Icons.timer_rounded,
                   color: isBurstActive ? Colors.orange : Colors.blueAccent,
                   onTap: () async {
                     if (isBurstActive) {
