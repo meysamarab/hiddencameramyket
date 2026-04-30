@@ -90,7 +90,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
           await ref.read(cameraManagerProvider).stopVideoRecording();
           _stopRecordingTimer();
           ref.read(isRecordingProvider.notifier).state = false;
-          _showTrialEndedDialog();
+          _showTrialEndedToast();
         }
       }
     });
@@ -401,51 +401,37 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
     );
   }
 
-  void _showTrialEndedDialog() {
+  void _showTrialEndedToast() {
     if (!mounted) return;
     
     _stopRecordingTimer();
     // Stop any UI indicators
     ref.read(isRecordingProvider.notifier).state = false;
 
-    showDialog(
-      context: context,
-      barrierDismissible: false,
-      builder: (context) => AlertDialog(
-        backgroundColor: Colors.grey[900],
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
-        title: const Row(
-          children: [
-            Icon(Icons.warning_amber_rounded, color: Colors.orange),
-            SizedBox(width: 10),
-            Text('پایان زمان تست', style: TextStyle(color: Colors.white)),
-          ],
-        ),
+    // Pop any open screens (like Settings) to go back to Home
+    Navigator.of(context).popUntil((route) => route.isFirst);
+
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
         content: const Text(
-          'زمان ۳۰ ثانیه‌ای تست رایگان به پایان رسید. برای ضبط طولانی‌تر، لطفاً اشتراک تهیه کنید.',
-          style: TextStyle(color: Colors.white70),
+          'محدودیت نسخه رایگان ۳۰ ثانیه می‌باشد. برای ضبط طولانی‌تر اشتراک تهیه کنید.',
+          textAlign: TextAlign.center,
+          style: TextStyle(fontFamily: 'Vazir'), // Assuming Vazir or standard font
         ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context),
-            child: const Text('متوجه شدم', style: TextStyle(color: Colors.white60)),
-          ),
-          ElevatedButton(
-            onPressed: () async {
-              Navigator.pop(context);
-              final success = await ref.read(iapServiceProvider).purchasePremium();
-              if (success) {
-                ref.read(isPremiumProvider.notifier).state = true;
-              }
-            },
-            style: ElevatedButton.styleFrom(
-              backgroundColor: Colors.orange,
-              foregroundColor: Colors.white,
-              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-            ),
-            child: const Text('ارتقا به ویژه'),
-          ),
-        ],
+        backgroundColor: Colors.redAccent,
+        behavior: SnackBarBehavior.floating,
+        duration: const Duration(seconds: 4),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+        action: SnackBarAction(
+          label: 'ارتقا',
+          textColor: Colors.white,
+          onPressed: () async {
+            final success = await ref.read(iapServiceProvider).purchasePremium();
+            if (success) {
+              ref.read(isPremiumProvider.notifier).state = true;
+            }
+          },
+        ),
       ),
     );
   }
