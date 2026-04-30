@@ -11,7 +11,7 @@ class IAPService {
       await FlutterPoolakey.connect(
         _rsaKey,
         onSucceed: () => success = true,
-        onFailed: (message) => success = false,
+        onFailed: () => success = false,
       );
       return success;
     } catch (e) {
