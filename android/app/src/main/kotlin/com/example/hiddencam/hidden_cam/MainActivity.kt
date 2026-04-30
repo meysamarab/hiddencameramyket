@@ -14,13 +14,21 @@ import io.flutter.plugin.common.MethodChannel
 
 class MainActivity : FlutterActivity() {
     private val CHANNEL = "com.example.hiddencam/camera_channel"
-    private var methodChannel: MethodChannel? = null
+
+    companion object {
+        var methodChannel: MethodChannel? = null
+        
+        fun notifyFlutter(method: String, arguments: Any? = null) {
+            methodChannel?.invokeMethod(method, arguments)
+        }
+    }
 
     private val trialEndedReceiver = object : BroadcastReceiver() {
         override fun onReceive(context: Context?, intent: Intent?) {
+            android.util.Log.d("HiddenCam", "Broadcast received: ${intent?.action}")
             when (intent?.action) {
-                "TRIAL_ENDED" -> methodChannel?.invokeMethod("onTrialEnded", null)
-                "PHOTO_TAKEN" -> methodChannel?.invokeMethod("onPhotoTaken", null)
+                "TRIAL_ENDED" -> notifyFlutter("onTrialEnded")
+                "PHOTO_TAKEN" -> notifyFlutter("onPhotoTaken")
             }
         }
     }

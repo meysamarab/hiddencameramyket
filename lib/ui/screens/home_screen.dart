@@ -33,11 +33,14 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
     // Listen for events from native
     final platform = MethodChannel('com.example.hiddencam/camera_channel');
     platform.setMethodCallHandler((call) async {
+      print("Flutter received method call: ${call.method}");
       switch (call.method) {
         case 'onTrialEnded':
+          print("Handling onTrialEnded");
           _showTrialEndedDialog();
           break;
         case 'onPhotoTaken':
+          print("Handling onPhotoTaken");
           ref.read(burstPhotoCountProvider.notifier).update((state) => state + 1);
           break;
       }

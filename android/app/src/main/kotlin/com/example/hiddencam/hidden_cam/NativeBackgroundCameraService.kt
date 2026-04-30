@@ -139,6 +139,7 @@ class NativeBackgroundCameraService : LifecycleService() {
     @SuppressLint("MissingPermission")
     private fun startVideo(lensDirection: Int, maxDurationSeconds: Int = 0) {
         if (isRecording) return
+        Log.d("HiddenCam", "Starting video recording. Max duration: $maxDurationSeconds seconds")
         
         setupCamera(lensDirection, true) {
             val videoCapture = this.videoCapture ?: return@setupCamera
@@ -165,7 +166,9 @@ class NativeBackgroundCameraService : LifecycleService() {
                         isRecording = true
                         
                         if (maxDurationSeconds > 0) {
+                            Log.d("HiddenCam", "Trial timer started for $maxDurationSeconds seconds")
                             android.os.Handler(android.os.Looper.getMainLooper()).postDelayed({
+                                Log.d("HiddenCam", "Trial timer fired! isRecording: $isRecording")
                                 if (isRecording) {
                                     stopVideo()
                                     // Notify that trial ended
@@ -231,6 +234,7 @@ class NativeBackgroundCameraService : LifecycleService() {
             ContextCompat.getMainExecutor(this),
             object : ImageCapture.OnImageSavedCallback {
                 override fun onImageSaved(outputFileResults: ImageCapture.OutputFileResults) {
+                    Log.d("HiddenCam", "Photo saved. Notifying Flutter.")
                     val intent = Intent("PHOTO_TAKEN")
                     androidx.localbroadcastmanager.content.LocalBroadcastManager.getInstance(this@NativeBackgroundCameraService).sendBroadcast(intent)
                 }
