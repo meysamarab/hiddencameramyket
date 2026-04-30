@@ -85,10 +85,8 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
               _buildStatusIndicator(context, isRecording, isBurstActive, l10n),
               const SizedBox(height: 40),
               
-              if (!isBurstActive && !isRecording) ...[
-                _buildBurstSettings(context, burstDuration, burstInterval, l10n),
-                const SizedBox(height: 30),
-              ],
+              // Burst settings moved below button
+
               
               if (!isBurstActive)
                 _buildActionButton(
@@ -134,6 +132,29 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                     }
                   },
                 ),
+              
+              if (!isRecording && !isBurstActive) ...[
+                const SizedBox(height: 32),
+                Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 40),
+                  child: Row(
+                    children: [
+                      const Icon(Icons.tune_rounded, color: Colors.white70, size: 20),
+                      const SizedBox(width: 8),
+                      Text(
+                        l10n.burstSettings ?? 'تنظیمات عکس‌برداری خودکار',
+                        style: const TextStyle(
+                          color: Colors.white70,
+                          fontWeight: FontWeight.bold,
+                          fontSize: 14,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+                const SizedBox(height: 12),
+                _buildBurstSettings(context, burstDuration, burstInterval, l10n),
+              ],
             ],
           ),
         ),

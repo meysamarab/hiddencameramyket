@@ -21,8 +21,19 @@ class _GalleryScreenState extends State<GalleryScreen> {
   }
 
   Future<void> _loadFiles() async {
-    final directory = await getApplicationDocumentsDirectory();
-    final entities = await directory.list().toList();
+    final directory = await getExternalStorageDirectory();
+    if (directory == null) return;
+    
+    final mediaDir = Directory('${directory.path}/Media');
+    if (!await mediaDir.exists()) {
+      setState(() {
+        _files = [];
+        _isLoading = false;
+      });
+      return;
+    }
+
+    final entities = await mediaDir.list().toList();
     
     setState(() {
       _files = entities

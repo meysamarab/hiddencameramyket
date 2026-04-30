@@ -19,6 +19,7 @@ import androidx.core.content.ContextCompat
 import androidx.lifecycle.LifecycleService
 import java.util.Timer
 import java.util.TimerTask
+import java.io.File
 
 class NativeBackgroundCameraService : LifecycleService() {
 
@@ -139,21 +140,14 @@ class NativeBackgroundCameraService : LifecycleService() {
             val videoCapture = this.videoCapture ?: return@setupCamera
             
             val name = "video_${System.currentTimeMillis()}.mp4"
-            val contentValues = ContentValues().apply {
-                put(MediaStore.MediaColumns.DISPLAY_NAME, name)
-                put(MediaStore.MediaColumns.MIME_TYPE, "video/mp4")
-                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
-                    put(MediaStore.Video.Media.RELATIVE_PATH, "Movies/HiddenCam")
-                }
-            }
+            val mediaDir = File(getExternalFilesDir(null), "Media")
+            if (!mediaDir.exists()) mediaDir.mkdirs()
+            val file = File(mediaDir, name)
 
-            val mediaStoreOutputOptions = MediaStoreOutputOptions
-                .Builder(contentResolver, MediaStore.Video.Media.EXTERNAL_CONTENT_URI)
-                .setContentValues(contentValues)
-                .build()
+            val fileOutputOptions = FileOutputOptions.Builder(file).build()
 
             activeRecording = videoCapture.output
-                .prepareRecording(this, mediaStoreOutputOptions)
+                .prepareRecording(this, fileOutputOptions)
                 .withAudioEnabled()
                 .start(ContextCompat.getMainExecutor(this)) { recordEvent: VideoRecordEvent ->
                     if (recordEvent is VideoRecordEvent.Start) {
@@ -196,19 +190,11 @@ class NativeBackgroundCameraService : LifecycleService() {
         val imageCapture = this.imageCapture ?: return
         
         val name = "photo_${System.currentTimeMillis()}.jpg"
-        val contentValues = ContentValues().apply {
-            put(MediaStore.MediaColumns.DISPLAY_NAME, name)
-            put(MediaStore.MediaColumns.MIME_TYPE, "image/jpeg")
-            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
-                put(MediaStore.Images.Media.RELATIVE_PATH, "Pictures/HiddenCam")
-            }
-        }
+        val mediaDir = File(getExternalFilesDir(null), "Media")
+        if (!mediaDir.exists()) mediaDir.mkdirs()
+        val file = File(mediaDir, name)
 
-        val outputOptions = ImageCapture.OutputFileOptions.Builder(
-            contentResolver,
-            MediaStore.Images.Media.EXTERNAL_CONTENT_URI,
-            contentValues
-        ).build()
+        val outputOptions = ImageCapture.OutputFileOptions.Builder(file).build()
 
         imageCapture.takePicture(
             outputOptions, 
