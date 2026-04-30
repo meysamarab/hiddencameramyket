@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../providers/app_providers.dart';
+import '../../l10n/app_localizations.dart';
 import 'settings_screen.dart';
 import 'gallery_screen.dart';
 import 'black_screen_mode.dart';
