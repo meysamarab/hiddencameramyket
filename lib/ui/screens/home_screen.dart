@@ -28,7 +28,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
     ref.read(isPremiumProvider.notifier).state = isPremium;
 
     // Listen for trial end from native
-    const platform = MethodChannel('com.example.hiddencam/camera_channel');
+    final platform = MethodChannel('com.example.hiddencam/camera_channel');
     platform.setMethodCallHandler((call) async {
       if (call.method == 'onTrialEnded') {
         _showTrialEndedDialog();
