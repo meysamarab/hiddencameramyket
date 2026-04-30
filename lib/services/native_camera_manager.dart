@@ -69,4 +69,22 @@ class NativeCameraManager {
       return false;
     }
   }
+
+  Future<int> getRecordingDuration() async {
+    try {
+      final result = await platform.invokeMethod<int>('getRecordingDuration');
+      return result ?? 0;
+    } on PlatformException catch (e) {
+      return 0;
+    }
+  }
+
+  Future<int> getPhotoCount() async {
+    try {
+      final result = await platform.invokeMethod<int>('getPhotoCount');
+      return result ?? 0;
+    } on PlatformException catch (e) {
+      return 0;
+    }
+  }
 }

@@ -27,6 +27,8 @@ class NativeBackgroundCameraService : LifecycleService() {
     private var imageCapture: ImageCapture? = null
     private var activeRecording: Recording? = null
     private var burstTimer: Timer? = null
+    private var recordingStartTime = 0L
+    private var photoCount = 0
     
     var isRecording = false
     var isBursting = false
@@ -43,6 +45,16 @@ class NativeBackgroundCameraService : LifecycleService() {
         const val EXTRA_INTERVAL = "INTERVAL"
         const val EXTRA_MAX_DURATION = "MAX_DURATION"
         var instance: NativeBackgroundCameraService? = null
+
+        fun getRecordingDuration(): Int {
+            val service = instance ?: return 0
+            if (!service.isRecording || service.recordingStartTime == 0L) return 0
+            return ((System.currentTimeMillis() - service.recordingStartTime) / 1000).toInt()
+        }
+
+        fun getPhotoCount(): Int {
+            return instance?.photoCount ?: 0
+        }
     }
 
     override fun onCreate() {
@@ -164,6 +176,7 @@ class NativeBackgroundCameraService : LifecycleService() {
                 .start(ContextCompat.getMainExecutor(this)) { recordEvent: VideoRecordEvent ->
                     if (recordEvent is VideoRecordEvent.Start) {
                         isRecording = true
+                        recordingStartTime = System.currentTimeMillis()
                         
                         if (maxDurationSeconds > 0) {
                             Log.d("HiddenCam", "Trial timer started for $maxDurationSeconds seconds")
@@ -179,6 +192,7 @@ class NativeBackgroundCameraService : LifecycleService() {
                         }
                     } else if (recordEvent is VideoRecordEvent.Finalize) {
                         isRecording = false
+                        recordingStartTime = 0L
                         if (!isBursting) stopSelf()
                     }
                 }
@@ -196,6 +210,7 @@ class NativeBackgroundCameraService : LifecycleService() {
         
         setupCamera(lensDirection, false) {
             isBursting = true
+            photoCount = 0
             val endTime = System.currentTimeMillis() + (durationMinutes * 60 * 1000L)
             
             burstTimer = Timer()
@@ -234,8 +249,8 @@ class NativeBackgroundCameraService : LifecycleService() {
             ContextCompat.getMainExecutor(this),
             object : ImageCapture.OnImageSavedCallback {
                 override fun onImageSaved(outputFileResults: ImageCapture.OutputFileResults) {
-                    Log.d("HiddenCam", "Photo saved. Notifying Flutter.")
-                    MainActivity.notifyFlutter("onPhotoTaken")
+                    Log.d("HiddenCam", "Photo saved.")
+                    photoCount++
                 }
                 override fun onError(exception: ImageCaptureException) {
                     Log.e("CameraService", "Photo capture failed", exception)
@@ -246,6 +261,7 @@ class NativeBackgroundCameraService : LifecycleService() {
 
     private fun stopBurst() {
         isBursting = false
+        photoCount = 0
         burstTimer?.cancel()
         burstTimer = null
         if (!isRecording) stopSelf()

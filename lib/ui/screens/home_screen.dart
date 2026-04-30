@@ -59,13 +59,40 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
       if (isRecording) {
         _startRecordingTimer();
       }
+      if (isBursting) {
+        _startBurstPolling();
+      }
     }
+  }
+
+  Timer? _burstPollingTimer;
+  void _startBurstPolling() {
+    _burstPollingTimer?.cancel();
+    _burstPollingTimer = Timer.periodic(const Duration(seconds: 1), (timer) async {
+      final count = await ref.read(cameraManagerProvider).getPhotoCount();
+      if (mounted) {
+        ref.read(burstPhotoCountProvider.notifier).state = count;
+      }
+    });
   }
 
   void _startRecordingTimer() {
     _recordingTimer?.cancel();
-    _recordingTimer = Timer.periodic(const Duration(seconds: 1), (timer) {
-      ref.read(recordingDurationProvider.notifier).update((state) => state + 1);
+    _recordingTimer = Timer.periodic(const Duration(seconds: 1), (timer) async {
+      final duration = await ref.read(cameraManagerProvider).getRecordingDuration();
+      final isPremium = ref.read(isPremiumProvider);
+      
+      if (mounted) {
+        ref.read(recordingDurationProvider.notifier).state = duration;
+        
+        // Safety check: stop if trial ended (30s)
+        if (!isPremium && duration >= 30) {
+          await ref.read(cameraManagerProvider).stopVideoRecording();
+          _stopRecordingTimer();
+          ref.read(isRecordingProvider.notifier).state = false;
+          _showTrialEndedDialog();
+        }
+      }
     });
   }
 
@@ -78,6 +105,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
   @override
   void dispose() {
     _recordingTimer?.cancel();
+    _burstPollingTimer?.cancel();
     super.dispose();
   }
 
@@ -206,6 +234,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                         intervalSeconds: burstInterval,
                       );
                       ref.read(isBurstActiveProvider.notifier).state = true;
+                      _startBurstPolling();
                       
                       // Auto reset after duration
                       Future.delayed(Duration(minutes: burstDuration), () {

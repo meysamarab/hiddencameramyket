@@ -72,6 +72,12 @@ class MainActivity : FlutterActivity() {
                     val isBursting = NativeBackgroundCameraService.instance?.isBursting ?: false
                     result.success(isBursting)
                 }
+                "getRecordingDuration" -> {
+                    result.success(NativeBackgroundCameraService.getRecordingDuration())
+                }
+                "getPhotoCount" -> {
+                    result.success(NativeBackgroundCameraService.getPhotoCount())
+                }
                 else -> {
                     result.notImplemented()
                 }
