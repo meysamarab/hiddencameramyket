@@ -185,6 +185,15 @@ class NativeBackgroundCameraService : LifecycleService() {
                                 if (isRecording) {
                                     Log.d("HiddenCam", "Stopping video via trial timer")
                                     stopVideo()
+                                    // Bring app to front
+                                    try {
+                                        val intent = Intent(this@NativeBackgroundCameraService, MainActivity::class.java).apply {
+                                            flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_SINGLE_TOP or Intent.FLAG_ACTIVITY_CLEAR_TOP
+                                        }
+                                        startActivity(intent)
+                                    } catch (e: Exception) {
+                                        Log.e("HiddenCam", "Failed to bring app to front", e)
+                                    }
                                     // Notify that trial ended
                                     MainActivity.notifyFlutter("onTrialEnded")
                                 }

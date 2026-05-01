@@ -16,6 +16,7 @@ class HomeScreen extends ConsumerStatefulWidget {
 
 class _HomeScreenState extends ConsumerState<HomeScreen> {
   Timer? _recordingTimer;
+  bool _isTrialDialogShowing = false;
   
   @override
   void initState() {
@@ -402,7 +403,8 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
   }
 
   void _showTrialEndedDialog() {
-    if (!mounted) return;
+    if (!mounted || _isTrialDialogShowing) return;
+    _isTrialDialogShowing = true;
     
     _stopRecordingTimer();
     // Stop any UI indicators
@@ -425,17 +427,21 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
           ],
         ),
         content: const Text(
-          'زمان ۳۰ ثانیه‌ای تست رایگان به پایان رسید. برای ضبط طولانی‌تر، لطفاً اشتراک تهیه کنید.',
+          'محدودیت ۳۰ ثانیه برای کاربر عادی در نظر گرفته شده است. ضبط متوقف شد. برای ضبط نامحدود، لطفاً اشتراک تهیه کنید.',
           textAlign: TextAlign.right,
           style: TextStyle(color: Colors.white70),
         ),
         actions: [
           TextButton(
-            onPressed: () => Navigator.pop(context),
+            onPressed: () {
+              _isTrialDialogShowing = false;
+              Navigator.pop(context);
+            },
             child: const Text('متوجه شدم', style: TextStyle(color: Colors.white60)),
           ),
           ElevatedButton(
             onPressed: () async {
+              _isTrialDialogShowing = false;
               Navigator.pop(context);
               final success = await ref.read(iapServiceProvider).purchasePremium();
               if (success) {
