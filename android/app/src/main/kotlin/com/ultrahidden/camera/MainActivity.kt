@@ -1,4 +1,4 @@
-package com.example.hiddencam.hidden_cam
+package com.ultrahidden.camera
 
 import android.content.Intent
 import android.net.Uri
@@ -13,7 +13,7 @@ import io.flutter.embedding.engine.FlutterEngine
 import io.flutter.plugin.common.MethodChannel
 
 class MainActivity : FlutterActivity() {
-    private val CHANNEL = "com.example.hiddencam/camera_channel"
+    private val CHANNEL = "com.ultrahidden.camera/camera_channel"
 
     companion object {
         var methodChannel: MethodChannel? = null
@@ -25,8 +25,6 @@ class MainActivity : FlutterActivity() {
             }
         }
     }
-
-    // Remove trialEndedReceiver as we'll use direct calls
 
     override fun configureFlutterEngine(@NonNull flutterEngine: FlutterEngine) {
         super.configureFlutterEngine(flutterEngine)

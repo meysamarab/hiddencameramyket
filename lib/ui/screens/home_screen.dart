@@ -33,7 +33,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> with WidgetsBindingObse
     ref.read(isPremiumProvider.notifier).state = isPremium;
 
     // Listen for events from native
-    final platform = MethodChannel('com.example.hiddencam/camera_channel');
+    final platform = MethodChannel('com.ultrahidden.camera/camera_channel');
     platform.setMethodCallHandler((call) async {
       print("Flutter received method call: ${call.method}");
       switch (call.method) {

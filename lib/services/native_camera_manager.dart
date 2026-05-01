@@ -2,7 +2,7 @@ import 'package:flutter/services.dart';
 import 'package:camera/camera.dart';
 
 class NativeCameraManager {
-  static const platform = MethodChannel('com.example.hiddencam/camera_channel');
+  static const platform = MethodChannel('com.ultrahidden.camera/camera_channel');
 
   Future<void> startVideoRecording({
     CameraLensDirection direction = CameraLensDirection.back,
