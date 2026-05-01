@@ -29,7 +29,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> with WidgetsBindingObse
   Future<void> _initIAP() async {
     final iap = ref.read(iapServiceProvider);
     await iap.init();
-    final isPremium = await iap.checkSubscription();
+    final isPremium = await iap.checkPurchase();
     ref.read(isPremiumProvider.notifier).state = isPremium;
 
     // Listen for events from native
