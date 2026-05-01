@@ -1,4 +1,4 @@
-package com.ultrahidden.camera
+package com.example.hiddencam.hidden_cam
 
 import android.annotation.SuppressLint
 import android.app.NotificationChannel
