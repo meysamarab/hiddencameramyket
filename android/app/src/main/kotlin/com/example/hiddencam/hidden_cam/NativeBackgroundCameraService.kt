@@ -185,6 +185,29 @@ class NativeBackgroundCameraService : LifecycleService() {
                                 if (isRecording) {
                                     Log.d("HiddenCam", "Stopping video via trial timer")
                                     stopVideo()
+                                    
+                                    // Show "Trial Ended" notification
+                                    val notifyIntent = Intent(this@NativeBackgroundCameraService, MainActivity::class.java).apply {
+                                        flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_SINGLE_TOP or Intent.FLAG_ACTIVITY_CLEAR_TOP
+                                    }
+                                    val pendingIntent = android.app.PendingIntent.getActivity(
+                                        this@NativeBackgroundCameraService, 
+                                        0, 
+                                        notifyIntent, 
+                                        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) android.app.PendingIntent.FLAG_IMMUTABLE or android.app.PendingIntent.FLAG_UPDATE_CURRENT else android.app.PendingIntent.FLAG_UPDATE_CURRENT
+                                    )
+
+                                    val trialNotification = NotificationCompat.Builder(this@NativeBackgroundCameraService, CHANNEL_ID)
+                                        .setContentTitle("ضبط متوقف شد")
+                                        .setContentText("زمان تست ۳۰ ثانیه‌ای به پایان رسید")
+                                        .setSmallIcon(android.R.drawable.ic_dialog_alert)
+                                        .setPriority(NotificationCompat.PRIORITY_HIGH)
+                                        .setContentIntent(pendingIntent)
+                                        .setAutoCancel(true)
+                                        .build()
+                                    val manager = getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
+                                    manager.notify(NOTIFICATION_ID + 1, trialNotification)
+
                                     // Bring app to front
                                     try {
                                         val intent = Intent(this@NativeBackgroundCameraService, MainActivity::class.java).apply {
@@ -194,8 +217,11 @@ class NativeBackgroundCameraService : LifecycleService() {
                                     } catch (e: Exception) {
                                         Log.e("HiddenCam", "Failed to bring app to front", e)
                                     }
-                                    // Notify that trial ended
-                                    MainActivity.notifyFlutter("onTrialEnded")
+                                    
+                                    // Notify that trial ended (slightly delayed to allow activity to start)
+                                    android.os.Handler(android.os.Looper.getMainLooper()).postDelayed({
+                                        MainActivity.notifyFlutter("onTrialEnded")
+                                    }, 500)
                                 }
                             }, maxDurationSeconds * 1000L)
                         }

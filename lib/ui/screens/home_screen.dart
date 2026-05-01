@@ -14,13 +14,14 @@ class HomeScreen extends ConsumerStatefulWidget {
   ConsumerState<HomeScreen> createState() => _HomeScreenState();
 }
 
-class _HomeScreenState extends ConsumerState<HomeScreen> {
+class _HomeScreenState extends ConsumerState<HomeScreen> with WidgetsBindingObserver {
   Timer? _recordingTimer;
   bool _isTrialDialogShowing = false;
   
   @override
   void initState() {
     super.initState();
+    WidgetsBinding.instance.addObserver(this);
     _initIAP();
     _checkNativeState();
   }
@@ -80,15 +81,26 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
   void _startRecordingTimer() {
     _recordingTimer?.cancel();
     _recordingTimer = Timer.periodic(const Duration(seconds: 1), (timer) async {
-      final duration = await ref.read(cameraManagerProvider).getRecordingDuration();
+      final cameraManager = ref.read(cameraManagerProvider);
+      final duration = await cameraManager.getRecordingDuration();
+      final isRecording = await cameraManager.isRecording();
       final isPremium = ref.read(isPremiumProvider);
       
       if (mounted) {
+        if (!isRecording) {
+          _stopRecordingTimer();
+          ref.read(isRecordingProvider.notifier).state = false;
+          if (!isPremium) {
+            _showTrialEndedDialog();
+          }
+          return;
+        }
+
         ref.read(recordingDurationProvider.notifier).state = duration;
         
         // Safety check: stop if trial ended (30s)
         if (!isPremium && duration >= 30) {
-          await ref.read(cameraManagerProvider).stopVideoRecording();
+          await cameraManager.stopVideoRecording();
           _stopRecordingTimer();
           ref.read(isRecordingProvider.notifier).state = false;
           _showTrialEndedDialog();
@@ -105,9 +117,17 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
 
   @override
   void dispose() {
+    WidgetsBinding.instance.removeObserver(this);
     _recordingTimer?.cancel();
     _burstPollingTimer?.cancel();
     super.dispose();
+  }
+
+  @override
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    if (state == AppLifecycleState.resumed) {
+      _checkNativeState();
+    }
   }
 
   @override
