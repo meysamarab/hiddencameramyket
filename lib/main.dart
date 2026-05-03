@@ -8,14 +8,20 @@ import 'ui/screens/onboarding_screen.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'l10n/app_localizations.dart';
 
+import 'providers/app_providers.dart';
+
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
   
   final prefs = await SharedPreferences.getInstance();
   final showOnboarding = prefs.getBool('show_onboarding') ?? true;
+  final isPremium = prefs.getBool('isPremium') ?? false;
 
   runApp(
     ProviderScope(
+      overrides: [
+        isPremiumProvider.overrideWith((ref) => isPremium),
+      ],
       child: MyApp(showOnboarding: showOnboarding),
     ),
   );
