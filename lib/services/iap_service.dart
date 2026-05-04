@@ -1,5 +1,7 @@
 import 'dart:async';
 import 'package:myket_iap/myket_iap.dart';
+import 'package:myket_iap/util/iab_result.dart';
+import 'package:myket_iap/util/purchase.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 class IAPService {
@@ -11,15 +13,14 @@ class IAPService {
 
   Future<bool> init() async {
     try {
-      final iabResult = await MyketIAP.init(
+      final IabResult? iabResult = await MyketIAP.init(
         rsaKey: _rsaKey,
         enableDebugLogging: true,
       );
 
-      // IabResult has a isSuccess property or response code
-      _initialized = true;
+      _initialized = iabResult != null && iabResult.isSuccess();
       print("MyketIAP init result: $iabResult");
-      return true;
+      return _initialized;
     } catch (e) {
       print("MyketIAP init error: $e");
       _initialized = false;
@@ -36,15 +37,15 @@ class IAPService {
       if (!_initialized) return false;
 
       // Query the specific product purchase status
-      final result = await MyketIAP.getPurchase(
+      final Map result = await MyketIAP.getPurchase(
         sku: premiumProductId,
         querySkuDetails: false,
       );
 
-      final IabResult purchaseResult = result[MyketIAP.RESULT];
+      final IabResult? purchaseResult = result[MyketIAP.RESULT];
       final Purchase? purchase = result[MyketIAP.PURCHASE];
 
-      final isPremium = purchaseResult.isSuccess && purchase != null;
+      final isPremium = purchaseResult != null && purchaseResult.isSuccess() && purchase != null;
 
       if (isPremium) {
         await prefs.setBool('isPremium', true);
@@ -63,17 +64,18 @@ class IAPService {
         await init();
       }
 
-      final result = await MyketIAP.launchPurchaseFlow(
+      final Map result = await MyketIAP.launchPurchaseFlow(
         sku: premiumProductId,
         payload: "premium_upgrade",
       );
 
-      final IabResult purchaseResult = result[MyketIAP.RESULT];
+      final IabResult? purchaseResult = result[MyketIAP.RESULT];
       final Purchase? purchase = result[MyketIAP.PURCHASE];
 
-      final isPremium = purchaseResult.isSuccess &&
+      final isPremium = purchaseResult != null &&
+          purchaseResult.isSuccess() &&
           purchase != null &&
-          purchase.sku == premiumProductId;
+          purchase.mSku == premiumProductId;
 
       if (isPremium) {
         final prefs = await SharedPreferences.getInstance();
