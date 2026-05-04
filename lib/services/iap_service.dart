@@ -5,9 +5,8 @@ import 'package:myket_iap/util/purchase.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 class IAPService {
-  // TODO: Replace with your actual RSA public key from Myket developer panel
-  static const String _rsaKey = "YOUR_MYKET_RSA_KEY_HERE";
-  static const String premiumProductId = "YOUR_SKU_HERE";
+  static const String _rsaKey = "MIGfMA0GCSqGSIb3DQEBAQUAA4GNADCBiQKBgQCJ5Qsz4IuWdlXD/+7uLORkNXvFncUb/Y/nuq4rJntCSznXi5isAjkZYQQQGK8owiuKCA/kZJbICOTXA8+hC7KB744J5MksX18mJmbg1djarrG+QryEOMMh864s3o6ZJmG83GDbqZkuZJH/MMrsLZssw6FLXW9qifOp1T+ipaSZLQIDAQAB";
+  static const String premiumProductId = "pooli";
 
   bool _initialized = false;
 
@@ -15,7 +14,7 @@ class IAPService {
     try {
       final IabResult? iabResult = await MyketIAP.init(
         rsaKey: _rsaKey,
-        enableDebugLogging: true,
+        enableDebugLogging: false,
       );
 
       _initialized = iabResult != null && iabResult.isSuccess();
