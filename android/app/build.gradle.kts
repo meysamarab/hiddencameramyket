@@ -30,6 +30,15 @@ android {
         versionCode = flutter.versionCode
         versionName = flutter.versionName
         multiDexEnabled = true
+
+        // Myket In-App Billing configuration
+        val marketApplicationId = "ir.mservices.market"
+        val marketBindAddress = "ir.mservices.market.InAppBillingService.BIND"
+        manifestPlaceholders += mapOf(
+            "marketApplicationId" to marketApplicationId,
+            "marketBindAddress" to marketBindAddress,
+            "marketPermission" to "${marketApplicationId}.BILLING"
+        )
     }
 
     buildTypes {
