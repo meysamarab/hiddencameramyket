@@ -19,6 +19,16 @@ subprojects {
 subprojects {
     project.evaluationDependsOn(":app")
 }
+subprojects {
+    project.buildscript {
+        repositories {
+            google()
+            mavenCentral()
+            gradlePluginPortal()
+            maven { url = uri("https://maven.myket.ir") }
+        }
+    }
+}
 
 tasks.register<Delete>("clean") {
     delete(rootProject.layout.buildDirectory)
