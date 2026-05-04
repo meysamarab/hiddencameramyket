@@ -32,6 +32,16 @@ jobs:
       - name: Generate Localization
         run: flutter gen-l10n
 
+      - name: Create Key and Properties
+        run: |
+          if [ ! -f android/app/upload-keystore.jks ]; then
+            keytool -genkey -v -keystore android/app/upload-keystore.jks -keyalg RSA -keysize 2048 -validity 10000 -alias upload -storepass password123 -keypass password123 -dname "CN=Unknown, OU=Unknown, O=Unknown, L=Unknown, ST=Unknown, C=Unknown"
+          fi
+          echo "storePassword=password123" > android/key.properties
+          echo "keyPassword=password123" >> android/key.properties
+          echo "keyAlias=upload" >> android/key.properties
+          echo "storeFile=upload-keystore.jks" >> android/key.properties
+
       - name: Build APK
         run: flutter build apk --release
 
@@ -40,3 +50,9 @@ jobs:
         with:
           name: release-apk
           path: build/app/outputs/flutter-apk/app-release.apk
+
+      - name: Upload Keystore (SAVE THIS FOR UPDATES)
+        uses: actions/upload-artifact@v4
+        with:
+          name: production-keystore
+          path: android/app/upload-keystore.jks
